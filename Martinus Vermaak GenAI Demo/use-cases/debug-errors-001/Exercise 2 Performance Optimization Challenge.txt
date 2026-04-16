@@ -1,0 +1,30 @@
+Scenario Selected: Slow Database Query Analysis (JavaScript/Node.js)
+
+1. Why the code is slow:
+The code is slow because it is performing a massive aggregation of data (json_agg) across multiple large tables (Orders, Customers, Order Items, Products, Status History) without utilizing proper database indexes. It essentially forces the database to scan every single row of these large tables for every order.
+
+2. Specific operations causing the slowdown:
+
+Full Table Scans: The WHERE o.customer_id = $1 AND o.order_date BETWEEN $2 AND $3 clause is lacking an index, forcing the DB to scan all ~100,000 orders.
+
+Nested JSON Aggregation: Executing correlated subqueries to build complex JSON objects (json_build_object) for items and status_history on every single row is highly CPU-intensive for the database engine.
+
+3. Specific Improvements:
+
+Add Indexes: Create composite indexes on the orders table: CREATE INDEX idx_orders_customer_date ON orders(customer_id, order_date); and on foreign keys in order_items and order_status_history.
+
+Pagination: Implement LIMIT and OFFSET in the SQL query so the backend only fetches 20-50 orders at a time instead of an entire year's worth.
+
+Data Fetching Strategy: Split the query. Fetch the base orders first, then fetch the related items and statuses in a second query using the WHERE order_id IN (...) pattern, doing the JSON restructuring in Node.js instead of PostgreSQL.
+
+4. Performance Concepts Learned:
+
+B-Tree Indexing: How database engines use indexes to seek data in O(log n) time rather than O(n) sequential scans.
+
+Database vs. Application Processing: It is sometimes faster to fetch flat, raw relational data and construct complex nested JSON objects in the application layer (Node.js) rather than forcing the database engine to do it.
+
+5. Tools for Measurement:
+
+PostgreSQL: Use EXPLAIN ANALYZE before the query to see the exact execution plan and identify sequential scans.
+
+Node.js: Use console.time() and console.timeEnd() (already in the code) to measure total round-trip latency.

@@ -1,0 +1,27 @@
+Code Understanding Journal: Codebase Exploration Challenge
+Part 1: Understanding Task Creation and Status Updates
+Main Components: * src/models/Task.js (The core class defining the object structure)
+•	src/models/TaskStatus.js (The Enum defining valid states: TODO, REVIEW, DONE)
+Execution Flow & State: When a task is created, a new instance of the Task class is instantiated using new Task(title). The constructor automatically sets the default state: priority defaults to MEDIUM, status defaults to TODO, and updatedAt captures the current timestamp. Data is stored in memory as JavaScript objects. An interesting design pattern here is the strict separation of data structure (the Task class) from the business logic (which lives in separate algorithm files), following a domain-driven design approach.
+Part 2: Deepening Understanding of Task Prioritization
+Initial Understanding vs. Discovery: I initially assumed task priority was a simple sort based on the TaskPriority Enum (e.g., URGENT always beats LOW). Through exploration, I discovered the prioritySorter.js actually uses a complex, weighted scoring system (calculateTaskScore).
+Key Insights from AI Guided Questions:
+•	The algorithm assigns a base score by multiplying the priority Enum value by 10.
+•	It heavily penalizes completed tasks (subtracting 50 points) to push them to the bottom of the list.
+•	It adds bonus points for specific string tags (like "blocker" or "critical" adding 8 points) and proximity to the due date (overdue tasks get a massive 30-point boost).
+•	My misconception was that due dates strictly sorted tasks; instead, they are just one variable in a composite math equation.
+Part 3: Mapping Data Flow for Task Completion
+Data Flow & State Management:
+1.	Entry: An action triggers a task completion.
+2.	State Change: The task's status property is mutated to TaskStatus.DONE.
+3.	Timestamping: The completedAt property is set to the current date/time, and the updatedAt property is refreshed.
+4.	Synchronization (List Merger): If this local task is synced with a remote database using listMerger.js, the algorithm checks the status during conflict resolution. If the remote task is DONE but the local task is not, the DONE status automatically wins and overrides the local state.
+•	Potential Point of Failure: If the system fails to update the updatedAt timestamp when marking a task as complete, the two-way sync algorithm might overwrite the completion status if a remote user edited the task description more recently.
+Part 4: Final Presentation Summary
+High-Level Architecture: The application uses a functional, decoupled approach. Data models (Task) act as plain data containers, while pure functions in the algorithms folder manipulate arrays of these objects.
+How Key Features Work:
+•	Creation: Instantiates a clean object with safe defaults.
+•	Prioritization: Runs an array of tasks through a mapping function that calculates a numerical score based on 4 factors (base priority, due date, tags, and completion status), then sorts descending.
+•	Completion: Mutates the status string and timestamps, which heavily influences both the sorting algorithm and the conflict-resolution sync logic.
+Most Challenging Aspect: The most difficult part to grasp was the two-way sync logic (resolveTaskConflict), specifically how it decides which fields to keep when both a local and remote task have been updated. The AI prompts were crucial in breaking down the "most recent update wins" rule versus the "completed status always wins" rule.
+

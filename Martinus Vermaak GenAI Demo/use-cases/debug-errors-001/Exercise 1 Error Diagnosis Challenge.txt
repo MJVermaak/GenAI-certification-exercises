@@ -1,0 +1,26 @@
+Scenario Selected: JavaScript Global Variable Being Overwritten (Scenario 6)
+
+Error Analysis: TypeError / Variable Shadowing
+
+Error Description:
+The console throws an Uncaught TypeError: Cannot read properties of undefined (reading 'map'). In plain English, the application is trying to use the .map() array method on a variable that is either undefined or no longer an array (in this case, it was turned into a standard object).
+
+Root Cause:
+Inside the addTask function, the developer used the let keyword to declare a local variable named tasks (let tasks = { id: Date.now()... }). This shadows the global tasks array. Instead of adding a new item to the array, it temporarily creates a local object. When displayTasks() is called immediately after, the global tasks array is effectively broken/desynced, causing .map() to fail.
+
+Solution:
+Rename the local variable inside the function and use the .push() method to append it to the global array:
+
+JavaScript
+function addTask(taskName) {
+    // FIX: Renamed 'tasks' to 'newTask' and pushed to the global array
+    const newTask = { id: Date.now(), name: taskName, completed: false };
+    tasks.push(newTask);
+    console.log("Task added:", newTask);
+    displayTasks();
+}
+Learning Points:
+
+Variable Shadowing: Never name a local variable the same thing as a global state variable.
+
+Immutability: Instead of mutating global arrays directly, using state management patterns (like Redux or React's useState) can prevent accidental overwrites.

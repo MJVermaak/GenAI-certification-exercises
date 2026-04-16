@@ -1,0 +1,64 @@
+Scenario Selected: Buggy Sorting Function (JavaScript Merge Sort)
+
+Verification Process & Critical Analysis:
+I analyzed the AI-provided Merge Sort code using the "Collaborative Solution Verification" strategy.
+
+Understanding the Bug: The bug exists in the cleanup loop of the merge helper function.
+
+JavaScript
+while (i < left.length) {
+    result.push(left[i]);
+    j++; // BUG: incrementing j instead of i
+}
+Because i is never incremented, i < left.length remains infinitely true, causing an infinite loop that will crash the browser or Node process with a memory leak.
+
+Test Cases Devised:
+
+Standard array: [5, 2, 9, 1, 5, 6]
+
+Edge case 1: [] (Empty array)
+
+Edge case 2: [1] (Single element)
+
+Edge case 3: [-5, 0, -2, 4] (Negative numbers)
+
+Final Verified Solution:
+
+JavaScript
+function mergeSort(arr) {
+    if (arr.length <= 1) return arr;
+    const mid = Math.floor(arr.length / 2);
+    const left = mergeSort(arr.slice(0, mid));
+    const right = mergeSort(arr.slice(mid));
+    return merge(left, right);
+}
+
+function merge(left, right) {
+    let result = [];
+    let i = 0;
+    let j = 0;
+
+    while (i < left.length && j < right.length) {
+        if (left[i] < right[j]) {
+            result.push(left[i]);
+            i++;
+        } else {
+            result.push(right[j]);
+            j++;
+        }
+    }
+
+    // FIXED: Properly incrementing 'i' to prevent infinite loops
+    while (i < left.length) {
+        result.push(left[i]);
+        i++; 
+    }
+
+    while (j < right.length) {
+        result.push(right[j]);
+        j++;
+    }
+    return result;
+}
+Reflection:
+My confidence in using AI solutions changed significantly. I realized that AI can easily generate code that looks structurally perfect but contains catastrophic infinite-loop bugs hidden in a single character (j++ instead of i++). The most valuable verification technique was manually tracing the variable state during the while loop execution, proving that blindly copying AI code into production without dry-running edge cases is highly dangerous.

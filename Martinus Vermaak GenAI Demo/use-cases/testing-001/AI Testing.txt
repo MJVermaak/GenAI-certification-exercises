@@ -1,0 +1,102 @@
+1. Test Plan Document (Behavior Analysis)
+Functions under test: calculateTaskScore, sortTasksByImportance, getTopPriorityTasks
+
+Priority 1: Core Scoring Logic (calculateTaskScore) - Unit Tests
+
+Behaviors to test: Base priority weights (LOW to URGENT), due date proximity boosts (overdue, today, soon), status penalties (DONE, REVIEW), tag boosts, and recency boosts.
+
+Edge Cases: Task with no due date, task completed but marked URGENT, task with an invalid date string, task updated exactly 24 hours ago.
+
+Priority 2: Sorting Mechanism (sortTasksByImportance) - Unit Tests
+
+Behaviors to test: Tasks are returned in descending order based on score.
+
+Edge Cases: Empty array [], array with one task, array where all tasks have the exact same score (checking for stable sorting).
+
+Priority 3: Workflow Integration (getTopPriorityTasks) - Integration Test
+
+Behaviors to test: Slices the correctly sorted array to the exact limit specified.
+
+Edge Cases: Requesting a limit larger than the array size, limit of 0.
+
+2. Improved Unit Tests (Learning from Examples)
+Original Flawed Approach: Initially, I wrote a test that relied on the live system clock new Date(), which meant the test would pass today but fail tomorrow when the relative due date changed.
+
+Improved Approach (Using Jest Fake Timers):
+
+JavaScript
+describe('calculateTaskScore - Due Date Logic', () => {
+  // Lock the system time so relative date math is always predictable
+  beforeAll(() => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2023-10-15T12:00:00Z'));
+  });
+  
+  afterAll(() => jest.useRealTimers());
+
+  it('adds 30 points for overdue tasks', () => {
+    const task = new Task('Overdue Task');
+    task.dueDate = new Date('2023-10-10T12:00:00Z'); // 5 days ago
+    const score = calculateTaskScore(task);
+    expect(score).toBeGreaterThanOrEqual(30); 
+  });
+
+  it('does not crash or add date points when dueDate is null', () => {
+    const task = new Task('No Date Task');
+    task.dueDate = null;
+    const score = calculateTaskScore(task);
+    expect(score).toBe(20); // Default MEDIUM base score
+  });
+});
+3. Test-Driven Development (TDD) Implementation
+Feature 1: Boost for current user (+12 score)
+
+The Failing Test:
+
+JavaScript
+it('boosts score by 12 if assigned to the current user', () => {
+  const task = new Task('My Task');
+  task.assignee = 'currentUser';
+  // Base MEDIUM (20) + Current User (12) = 32
+  expect(calculateTaskScore(task, 'currentUser')).toBe(32);
+});
+The Minimal Code Fix: Added to calculateTaskScore:
+
+JavaScript
+// Pass currentUser as a second parameter to the function
+if (task.assignee === currentUser) {
+  score += 12;
+}
+Feature 2: Bug Fix for "Days Since Update"
+
+The Bug: The original code Math.floor((now - updatedAt) / (1000 * 60 * 60 * 24)) was susceptible to daylight savings time boundaries, occasionally returning 0 days when it had actually been over 24 hours.
+
+The Failing Test: Set the system time across a DST change boundary and assert the recency boost is applied correctly.
+
+The Fix: Refactored to use UTC midnight-to-midnight comparisons rather than raw millisecond division.
+
+4. Integration Testing (The Full Workflow)
+This test ensures that a raw array of tasks correctly flows through the scoring algorithm, gets sorted, and is sliced to the top N requested tasks.
+
+JavaScript
+describe('Task Prioritization Integration Workflow', () => {
+  it('correctly scores, sorts, and limits a mixed batch of tasks', () => {
+    const tasks = [
+      { title: 'Low priority, no date', priority: TaskPriority.LOW, status: TaskStatus.TODO },
+      { title: 'Done task', priority: TaskPriority.URGENT, status: TaskStatus.DONE },
+      { title: 'Overdue blocker', priority: TaskPriority.HIGH, dueDate: '2020-01-01', tags: ['blocker'], status: TaskStatus.TODO },
+      { title: 'Standard medium', priority: TaskPriority.MEDIUM, status: TaskStatus.TODO }
+    ];
+
+    // Get the top 2 tasks
+    const results = getTopPriorityTasks(tasks, 2);
+
+    expect(results).toHaveLength(2);
+    // Overdue blocker should be #1 (High base + Overdue boost + Blocker tag)
+    expect(results[0].title).toBe('Overdue blocker');
+    // Standard medium should be #2 (Medium base > Low base. The Urgent task is penalized heavily for being DONE)
+    expect(results[1].title).toBe('Standard medium');
+  });
+});
+5. Reflection
+Using AI as a testing mentor rather than a code generator completely shifted my perspective. When I asked the AI to just "write tests for me," it produced brittle tests that verified implementation details rather than business behavior. However, using the prompt to ask me questions forced me to think about edge cases I hadn't considered (like timezone shifts and null values). I learned that TDD isn't just about writing tests first; it's about forcing yourself to define the exact expected behavior before writing a single line of application logic.

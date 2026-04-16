@@ -1,0 +1,22 @@
+Algorithm Deconstruction Journal: Task List Merging
+Algorithm Selected: Algorithm 3: Task List Merging (Two-Way Sync) - JavaScript Implementation
+1. Documented Understanding (Mental Model & Data Flow)
+The core purpose of this algorithm is to take two objects containing tasks (a local offline cache and a remote database) and synchronize them without losing data. The AI helped me break the process down into a simple mental model with two main phases:
+Phase 1: The Sorting Phase (mergeTaskLists) The algorithm gathers every unique Task ID using a JavaScript Set. It then loops through them and categorizes them into three buckets:
+•	Bucket A (Local Only): Add to toCreateRemote.
+•	Bucket B (Remote Only): Add to toCreateLocal.
+•	Bucket C (Exists in Both): Send to Phase 2 for conflict resolution.
+Phase 2: The Conflict Resolution Phase (resolveTaskConflict) When a task exists in both places, the algorithm applies a strict hierarchy of rules to merge them:
+1.	The "Timestamp" Rule: The task with the most recent updatedAt timestamp overwrites the basic fields (title, description, priority, due date) of the older task.
+2.	The "Done" Override Rule: If either the local or remote task has a status of DONE, the merged task becomes DONE, regardless of the timestamp. Completion is permanent.
+3.	The "Union" Tag Rule: Tags are not overwritten. Instead, they are combined into a single array using [...new Set([...localTags, ...remoteTags])] so no metadata is lost.
+2. Insights and Learning Points
+•	Immutability: The algorithm avoids mutating the original localTasks and remoteTasks objects. It creates a brand new mergedTask object using the spread operator ({...localTask}), which is a great practice to prevent side-effect bugs.
+•	Tracking Updates: Returning boolean flags (shouldUpdateLocal, shouldUpdateRemote) alongside the merged task is an efficient way to tell the application exactly which database needs a network call after the merge is complete, saving bandwidth.
+3. Reflection Questions
+How did the AI's explanation change your understanding of the algorithm? Initially, I thought merging lists just meant combining two arrays and removing duplicates. The AI's step-by-step breakdown showed me that syncing requires granular, field-by-field comparisons (like handling status differently than tags).
+What aspects were still difficult to understand after AI explanation? The most confusing part was tracking the logic flow of the shouldUpdateLocal and shouldUpdateRemote boolean flags. Because they flip to true inside multiple nested if/else blocks depending on who "won" the conflict, it was tough to hold the state of those flags in my head.
+How would you explain this algorithm to another junior developer? "Imagine two people editing the same shared grocery list on their phones while offline. When they reconnect, the system first adds any brand-new items either person wrote. If they both changed the exact same item (like changing 'Apples' to 'Green Apples'), the system keeps whoever typed it most recently. BUT, if one person crossed the item off as 'bought', it stays crossed off for both people, no matter what."
+Did you test this understanding against AI? Yes. I gave the AI a hypothetical scenario: "What happens if Local changes the title to 'Update UI' today, but Remote marked the old task 'Fix UI' as DONE yesterday?" The AI confirmed my understanding that the title would update to 'Update UI' (newer timestamp), but the status would remain 'DONE' (completion override rule).
+How might you improve the algorithm based on your understanding? The resolveTaskConflict function is currently quite long and handles too many responsibilities. I would refactor it by extracting the "Done Override Rule" and the "Tag Union Rule" into their own small, isolated helper functions (e.g., mergeTaskStatus() and mergeTaskTags()). This would make the main function much easier to read.
+

@@ -1,0 +1,70 @@
+Code Documentation Submission
+1. Original Code Selected 
+
+Algorithm: JavaScript Task Text Parser (parseTaskFromText)
+
+JavaScript
+function parseTaskFromText(text) {
+    let title = text.trim();
+    let priority = TaskPriority.MEDIUM;
+    let dueDate = null;
+    let tags = [];
+    // ... (Regex parsing for priority, tags, and dates)
+    const task = new Task(title);
+    task.priority = priority;
+    task.dueDate = dueDate;
+    task.tags = tags;
+    return task;
+}
+2. Prompt 1: Comprehensive Documentation 
+
+
+(Generated using the JSDoc convention )
+
+JavaScript
+/**
+ * Parses a free-form text string to extract task properties and generates a structured Task object. [cite: 1703]
+ *
+ * @param {string} text - The raw input string containing the task title and optional markers (!priority, @tag, #date). [cite: 1704]
+ * @returns {Task} A new Task instance populated with the extracted title, priority, dueDate, and tags. [cite: 1705]
+ * @throws {Error} Fails silently if date parsing encounters invalid formats, falling back to null. [cite: 1706]
+ *
+ * @example [cite: 1707]
+ * // Returns Task { title: 'Buy milk', priority: 2, tags: ['shopping'], dueDate: <Date for tomorrow> }
+ * const task = parseTaskFromText("Buy milk @shopping !2 #tomorrow");
+ *
+ * @description [cite: 1708]
+ * **Important Notes & Edge Cases:**
+ * - Priority markers can be numeric (!1 to !4) or named (!low, !urgent).
+ * - Strips all markers from the final title string.
+ */
+3. Prompt 2: Intent and Logic Insights 
+
+
+High-Level Intent: The goal is to provide a frictionless user experience by allowing users to type naturally rather than filling out complex forms.
+
+
+Step-by-Step Logic: It initializes default values, uses Regular Expressions to sequentially find and extract priority markers, tags, and dates, cleans the original string, and builds the object.
+
+Assumptions & Edge Cases: Assumes users type markers with a leading space. If a user types "email@john", it might accidentally parse "john" as a tag.
+
+
+Potential Improvements: Extracting the massive if/else block for date parsing into a separate helper function (e.g., parseDateString()) would make the main function much cleaner.
+
+4. Final Combined Documentation 
+
+JavaScript
+/**
+ * Parses free-form text to extract task properties, allowing users to create tasks using natural language shortcuts.
+ *
+ * @param {string} text - Raw input string (e.g., "Finish report !urgent @work #friday").
+ * @returns {Task} Structured Task object.
+ *
+ * @example
+ * const task = parseTaskFromText("Buy milk @shopping !2 #tomorrow");
+ *
+ * @notes
+ * - Logic Flow: Extracts priority (!), tags (@), and dates (#) sequentially using Regex before cleaning the title string.
+ * - Edge Case Warning: Ensure tags and markers are preceded by a space to avoid parsing email addresses or inline punctuation.
+ * - Future Improvement: Date parsing logic should be decoupled into a `DateUtils` module.
+ */

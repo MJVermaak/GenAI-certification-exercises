@@ -1,0 +1,24 @@
+Code Understanding Journal & Final Submission
+Exercise: Knowing Where to Start (JavaScript Task Manager)
+1. Initial vs. Final Understanding of the Codebase
+Initial Understanding: Going into this project, I assumed the Task Manager was a monolithic application where everything was tightly coupled in a single file or a basic script. I knew it used JavaScript, but I wasn't sure how the data was managed or processed. Final Understanding: After using the AI prompts, I now understand that the project follows a modular, utility-driven architecture. The core domain models (Task, TaskStatus, TaskPriority) are isolated in the src/models/ directory, while the heavy lifting is done by decoupled scripts in the src/algorithms/ directory (like prioritySorter.js and textParser.js). This separation of concerns makes it much easier to test and extend.
+2. Most Valuable Insights Gained from Prompts
+•	Project Structure Prompt: This immediately clarified that there isn't a massive backend or database hooked up yet; it's a lightweight Node.js environment focused strictly on algorithmic logic.
+•	Feature Location Prompt: When looking for where to put a "CSV Export" feature, the AI helped me realize I shouldn't shove it into the Task model. Instead, it belongs in a new utility module (e.g., src/utils/csvExporter.js) to keep the domain models clean.
+•	Domain Model Prompt: The prompt simulating a senior developer clarified the difference between TaskPriority (a strict enum used for mathematical sorting) and tags (flexible string metadata). It also highlighted how the updatedAt property acts as the tie-breaker for conflicts when merging lists.
+3. Approach to Implementing the New Business Rule
+Scenario: Tasks overdue for more than 7 days should be automatically marked as abandoned unless they are high priority.
+Implementation Plan:
+1.	Modify src/models/TaskStatus.js: Add a new state: ABANDONED: 'ABANDONED'.
+2.	Create a new Utility/Algorithm: Create src/algorithms/statusUpdater.js.
+3.	Add the Logic: Write a function markOverdueTasks(tasks) that iterates through the task list.
+o	Check if task.dueDate exists.
+o	Calculate daysOverdue = (now - task.dueDate).
+o	If daysOverdue > 7 AND task.priority < TaskPriority.HIGH, then set task.status = TaskStatus.ABANDONED.
+4.	Questions for the Team: "Should this script run automatically on a cron job every night, or is it triggered manually by a user action in the UI?"
+4. Strategies Developed for Approaching Unfamiliar Code
+Moving forward, I will not blindly read code line-by-line from top to bottom. Instead, my strategy is:
+1.	Skim the package.json to identify the tech stack and entry points.
+2.	Use AI to map the directory structure and identify the core domain models first (the "nouns" of the application).
+3.	Trace a single, simple feature (like creating a task) from start to finish to see how the data flows before looking at complex algorithms.
+
